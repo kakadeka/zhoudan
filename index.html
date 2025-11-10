@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>粥粥 - 允许万物穿过自己</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            position: relative;
+        }
+        
+        #video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+        }
+        
+        /* 备用背景图像 */
+        #fallback-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #3D4F2F, #87A368, #A5BD8A);
+            z-index: -2;
+        }
+        
+        .content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+        }
+        
+        .main-title {
+            font-size: 5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            animation: fadeIn 2s ease-in;
+        }
+        
+        .sub-title {
+            font-size: 2rem;
+            animation: fadeIn 3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @media (max-width: 768px) {
+            .main-title { font-size: 3rem; }
+            .sub-title { font-size: 1.5rem; }
+        }
+        
+        .loading-text {
+            font-size: 1rem;
+            margin-top: 1rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <!-- 备用背景，当视频无法加载时显示 -->
+    <div id="fallback-background"></div>
+    
+    <video id="video-background" autoplay muted loop playsinline preload="auto">
+        <source src="https://axurerp.oss-cn-beijing.aliyuncs.com/chusuluo/video.mp4" type="video/mp4">
+        您的浏览器不支持视频播放
+    </video>
+    
+    <div class="content">
+        <div class="main-title">粥粥</div>
+        <div class="sub-title">一生要强且倔强的摩羯姑娘</div>
+        <div class="loading-text">页面将在 <span id="countdown">8</span> 秒后跳转...</div>
+    </div>
+
+    <script>
+        // 检测浏览器是否支持视频播放
+        function canPlayVideo() {
+            const video = document.createElement('video');
+            return !!(video.canPlayType && video.canPlayType('video/mp4; codecs="avc1.42E01E, mp4a.40.2"'));
+        }
+        
+        // 启用视频声音（需要用户交互）
+        document.addEventListener('click', function() {
+            const video = document.getElementById('video-background');
+            if (video) {
+                video.muted = false;
+            }
+        }, { once: true });
+        
+        // 倒计时和跳转功能
+        let countdown = 8;
+        const countdownElement = document.getElementById('countdown');
+        
+        const countdownInterval = setInterval(function() {
+            countdown--;
+            if (countdownElement) {
+                countdownElement.textContent = countdown;
+            }
+            
+            if (countdown <= 0) {
+                clearInterval(countdownInterval);
+                window.location.href = 'https://www.xiaohongshu.com/user/profile/57b9561250c4b43d54b94228';
+            }
+        }, 1000);
+        
+        // 确保视频自动播放
+        window.addEventListener('load', function() {
+            const video = document.getElementById('video-background');
+            const fallbackBackground = document.getElementById('fallback-background');
+            
+            // 检查浏览器是否支持视频播放
+            if (!canPlayVideo()) {
+                console.log('浏览器不支持视频播放，显示备用背景');
+                if (fallbackBackground) {
+                    fallbackBackground.style.zIndex = '-1';
+                }
+                if (video) {
+                    video.style.display = 'none';
+                }
+                return;
+            }
+            
+            // 尝试播放视频
+            if (video) {
+                const playPromise = video.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise.then(function() {
+                        // 视频播放成功
+                        console.log('视频播放成功');
+                    }).catch(function(error) {
+                        // 视频播放失败，显示备用背景
+                        console.log('视频播放失败:', error);
+                        if (fallbackBackground) {
+                            fallbackBackground.style.zIndex = '-1';
+                        }
+                        video.style.display = 'none';
+                    });
+                }
+            }
+        });
+        
+        // 添加视频加载错误处理
+        document.getElementById('video-background').addEventListener('error', function() {
+            console.log('视频加载错误，使用备用背景');
+            const fallbackBackground = document.getElementById('fallback-background');
+            if (fallbackBackground) {
+                fallbackBackground.style.zIndex = '-1';
+            }
+            this.style.display = 'none';
+        });
+    </script>
+</body>
+</html>

@@ -3,172 +3,805 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>粥粥 - 允许万物穿过自己</title>
+    <title>周老板</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
-            font-family: 'Microsoft YaHei', sans-serif;
-            overflow: hidden;
-            height: 100vh;
-            position: relative;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            color: #fff;
+            background-color: #000;
+            overflow-x: hidden;
+            line-height: 1.6;
         }
-        
-        #video-background {
+
+        /* 背景轮播区域 */
+        .background-slider {
             position: fixed;
             top: 0;
             left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            background-size: cover;
+            background-position: center;
+            transition: opacity 1.5s ease-in-out;
+        }
+
+        .slide.active {
+            opacity: 1;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: -1;
+        }
+
+        /* 标题区域 */
+        .header {
+            text-align: center;
+            padding: 40px 20px 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .main-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+        }
+
+        .sub-title {
+            font-size: 1.5rem;
+            font-weight: 300;
+            opacity: 0.9;
+            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7);
+            margin-bottom: 20px;
+        }
+
+        /* 社交媒体图标 */
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .social-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .social-icon:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+        }
+
+        /* 内容区域 */
+        .content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 时间轴样式 */
+        .timeline {
+            position: relative;
+            margin-top: 40px;
+        }
+
+        .timeline-item {
+            display: flex;
+            margin-bottom: 40px;
+            position: relative;
+            align-items: flex-start;
+        }
+
+        .timeline-date {
+            width: 120px;
+            flex-shrink: 0;
+            text-align: right;
+            padding-right: 20px;
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.9);
+            position: relative;
+            padding-top: 13px;
+            font-weight: 500;
+        }
+
+        .timeline-content {
+            flex: 1;
+            background: rgba(30, 30, 30, 0.7);
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            margin-left: 10px;
+        }
+
+        .timeline-content h3 {
+            margin-bottom: 10px;
+            font-size: 1.0rem;
+        }
+
+        /* 九宫格布局 */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .grid-item {
+            aspect-ratio: 1;
+            overflow: hidden;
+            border-radius: 5px;
+            position: relative;
+            cursor: pointer;
+            background: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .grid-item img,
+        .grid-item video {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            z-index: -1;
+            transition: transform 0.3s ease;
         }
-        
-        /* 备用背景图像 */
-        #fallback-background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #3D4F2F, #87A368, #A5BD8A);
-            z-index: -2;
+
+        .grid-item:hover img,
+        .grid-item:hover video {
+            transform: scale(1.05);
         }
-        
-        .content {
+
+        .video-indicator {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            text-align: center;
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-indicator::after {
+            content: '';
+            width: 0;
+            height: 0;
+            border-left: 12px solid white;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            margin-left: 3px;
+        }
+
+        /* 弹窗样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            position: relative;
+        }
+
+        .modal-content img,
+        .modal-content video {
+            max-width: 100%;
+            max-height: 90vh;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: -40px;
+            right: 0;
             color: white;
-            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
-        }
-        
-        .main-title {
-            font-size: 5rem;
-            font-weight: bold;
-            margin-bottom: 1rem;
-            animation: fadeIn 2s ease-in;
-        }
-        
-        .sub-title {
             font-size: 2rem;
-            animation: fadeIn 3s ease-in;
+            cursor: pointer;
+            background: none;
+            border: none;
         }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+
+        .prev-btn,
+        .next-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 2rem;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        
+
+        .prev-btn {
+            left: 20px;
+        }
+
+        .next-btn {
+            right: 20px;
+        }
+
+        /* 微信二维码弹窗 */
+        .wechat-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .wechat-modal.active {
+            display: flex;
+        }
+
+        .wechat-content {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            color: #333;
+            max-width: 300px;
+            width: 90%;
+        }
+
+        .wechat-content h3 {
+            margin-bottom: 15px;
+        }
+
+        .wechat-content img {
+            max-width: 100%;
+            border-radius: 5px;
+        }
+
+        .wechat-close {
+            margin-top: 15px;
+            padding: 8px 15px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        /* 响应式设计 */
         @media (max-width: 768px) {
-            .main-title { font-size: 3rem; }
-            .sub-title { font-size: 1.5rem; }
+            .main-title {
+                font-size: 2.5rem;
+            }
+
+            .sub-title {
+                font-size: 1.2rem;
+            }
+
+            .timeline-date {
+                width: 100px;
+                padding-right: 15px;
+                font-size: 1rem;
+            }
+
+            .timeline-content h3 {
+                font-size: 1.2rem;
+            }
+
+            .grid-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
-        
-        .loading-text {
-            font-size: 1rem;
-            margin-top: 1rem;
-            opacity: 0.8;
+
+        @media (max-width: 480px) {
+            .main-title {
+                font-size: 2rem;
+            }
+
+            .sub-title {
+                font-size: 1rem;
+            }
+
+            .timeline-date {
+                width: 90px;
+                padding-right: 10px;
+                font-size: 0.95rem;
+            }
+
+            .timeline-content h3 {
+                font-size: 1.1rem;
+            }
+
+            .grid-container {
+                grid-template-columns: 1fr;
+            }
+
+            .prev-btn,
+            .next-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 1.5rem;
+            }
+            
+            .social-icons {
+                gap: 15px;
+            }
+            
+            .social-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 1.1rem;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- 备用背景，当视频无法加载时显示 -->
-    <div id="fallback-background"></div>
-    
-    <video id="video-background" autoplay muted loop playsinline preload="auto">
-        <source src="https://axurerp.oss-cn-beijing.aliyuncs.com/chusuluo/video.mp4" type="video/mp4">
-        您的浏览器不支持视频播放
-    </video>
-    
-    <div class="content">
-        <div class="main-title">粥粥</div>
-        <div class="sub-title">一生要强且倔强的摩羯姑娘</div>
-        <div class="loading-text">页面将在 <span id="countdown">8</span> 秒后跳转...</div>
+    <!-- 背景轮播 -->
+    <div class="background-slider">
+        <div class="slide" style="background-image: url('https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/beijing/01.jpg')"></div>
+        <div class="slide" style="background-image: url('https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/beijing/02.jpg')"></div>
+        <div class="slide" style="background-image: url('https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/beijing/03.jpg')"></div>
+        <div class="slide" style="background-image: url('https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/beijing/04.jpg')"></div>
+        <div class="slide" style="background-image: url('https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/beijing/05.jpg')"></div>
+        <div class="slide" style="background-image: url('https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/beijing/06.jpg')"></div>
+        <div class="slide" style="background-image: url('https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/beijing/07.jpg')"></div>
+        <div class="slide" style="background-image: url('https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/beijing/08.jpg')"></div>
+        <div class="slide" style="background-image: url('https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/beijing/09.jpg')"></div>
+    </div>
+    <div class="overlay"></div>
+
+    <!-- 标题区域 -->
+    <header class="header">
+        <h1 class="main-title">周老板</h1>
+        <h2 class="sub-title">真诚 热烈 要强 倔强</h2>
+        
+        <!-- 社交媒体图标 -->
+        <div class="social-icons">
+            <a href="https://www.xiaohongshu.com/user/profile/57b9561250c4b43d54b94228" target="_blank" class="social-icon">
+               <svg t="1762832750101" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1621" width="32" height="32"><path d="M19.242667 401.066667h68.053333s-7.936 113.962667-10.026667 133.973333c-2.090667 20.053333-9.6 73.898667-39.253333 108.117333L3.370667 567.594667c0 0.042667 7.936-7.509333 15.872-166.528zM133.461333 310.656h68.437334v315.008s-13.909333 49.536-52.309334 48.981333h-36.736l-29.866666-59.349333h44.074666c4.736 0 4.608-6.528 4.608-4.778667 0.042667 3.882667 1.792-299.861333 1.792-299.861333zM476.288 307.84l-34.517333 77.909333s-6.101333 15.573333 3.882666 16.128c10.026667 0.554667 57.301333 0 57.301334 0l-47.872 107.392s-4.992 13.909333 4.437333 13.909334h35.626667l-23.722667 55.637333h-78.08s-33.962667-4.992-20.053333-35.626667 34.517333-79.018667 34.517333-79.018666l-35.072 0.554666s-31.701333-6.698667-16.128-38.954666c15.573333-32.298667 54.528-117.973333 54.528-117.973334h65.152zM247.552 400.256H314.88s8.917333 162.773333 16 163.370667l-34.389333 77.610666s-31.701333-23.936-40.064-120.490666c-6.869333-79.701333-8.874667-120.490667-8.874667-120.490667zM362.752 600.576s2.218667 6.101333 27.818667 6.101333h77.909333l-31.146667 67.328H354.389333s-24.192 0.554667-23.509333-7.253333l31.872-66.176zM679.424 333.44v67.370667h-42.325333v205.909333h65.706666v67.328h-225.408l29.482667-66.773333h57.898667l1.109333-207.018667-40.618667-0.554667-1.664-66.261333z" p-id="1622" fill="#ffffff"></path><path d="M1024 615.04v-94.592c0-56.192-59.648-58.453333-59.648-58.453333h-17.237333V399.658667c0.554667-57.301333-68.992-66.218667-68.992-66.218667h-42.837334v-26.154667h-66.773333l1.109333 26.154667h-47.317333v66.218667h45.653333v62.890666H698.88v67.328l68.992 0.554667v143.573333h67.328V529.92h107.392c14.464 0 15.573333 14.464 15.573333 14.464s3.626667 39.381333 2.645334 56.192c-0.981333 16.682667-13.226667 15.573333-13.226667 15.573333h-55.637333l26.709333 57.898667h50.645333c59.050667 0 54.698667-59.008 54.698667-59.008z m-142.592-209.493333v55.637333H834.133333V400.512h40.362667c7.808 0 6.912 5.034667 6.912 5.034667z" p-id="1623" fill="#ffffff"></path><path d="M992 398.549333H960v-32c0-17.578667 14.421333-32 32-32 17.621333 0 32 14.421333 32 32s-14.378667 32-32 32z" p-id="1624" fill="#ffffff"></path></svg>
+            </a>
+            <a href="https://douyin.com" target="_blank" class="social-icon">
+                <i class="fab fa-tiktok"></i>
+            </a>
+            <a href="https://weibo.com" target="_blank" class="social-icon">
+                <i class="fab fa-weibo"></i>
+            </a>
+            <a href="javascript:void(0)" id="wechatBtn" class="social-icon">
+                <i class="fab fa-weixin"></i>
+            </a>
+        </div>
+    </header>
+
+    <!-- 内容区域 -->
+    <main class="content">
+        <div class="timeline">
+            <!-- 时间轴项目20251111 -->
+            <div class="timeline-item">
+                <div class="timeline-date">2025.11.11</div>
+                <div class="timeline-content">
+                    <h3>做人不要活的太明白了，做一个快乐的中年少女吧，中年是年龄，少女是心态，希望你在烟熏火燎的生活中依旧眼里有纯真，脸上有笑容～ </br>#赞比亚·卢萨卡</h3>
+                    <div class="grid-container">
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251111/01.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251111/01.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251111/02.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251111/02.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251111/03.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251111/03.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251111/04.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251111/04.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251111/05.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251111/05.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251111/06.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251111/06.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251111/07.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251111/07.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251111/08.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251111/08.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251111/09.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251111/09.jpg" alt=" " class="lazy">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 时间轴项目20251108 -->
+            <div class="timeline-item">
+                <div class="timeline-date">2025.11.08</div>
+                <div class="timeline-content">
+                    <h3>和朋友一起逛民俗村 完美演绎什么叫 这也要买，那也要买 [捂脸] </br>#赞比亚·卢萨卡</h3>
+                    <div class="grid-container">
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251108/01.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251108/01.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251108/02.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251108/02.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251108/03.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251108/03.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251108/04.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251108/04.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251108/05.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251108/05.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251108/06.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251108/06.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251108/07.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251108/07.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251108/08.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251108/08.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251108/09.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251108/09.jpg" alt=" " class="lazy">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 时间轴项目20251106 -->
+            <div class="timeline-item">
+                <div class="timeline-date">2025.11.06</div>
+                <div class="timeline-content">
+                    <h3>我的分享希望你喜欢打扮欲、分享欲、表达欲都是对自己人生，事业，工作的告白 </br>#卡塔尔·多哈</h3>
+                    <div class="grid-container">
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251106/01.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251106/01.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251106/02.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251106/02.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251106/03.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251106/03.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251106/04.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251106/04.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251106/05.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251106/05.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251106/06.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251106/06.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251106/07.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251106/07.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251106/08.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251106/08.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251106/09.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251106/09.jpg" alt=" " class="lazy">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 时间轴项目20251031 -->
+            <div class="timeline-item">
+                <div class="timeline-date">2025.10.31</div>
+                <div class="timeline-content">
+                    <h3>那天翻的不是山，是我心中的执念</br>#岗什卡</h3>
+                    <div class="grid-container">
+                        <div class="grid-item" data-type="video" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251031/01.mp4">
+                            <video muted playsinline>
+                                <source src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251031/01.mp4" type="video/mp4">
+                                您的浏览器不支持视频播放
+                            </video>
+                            <div class="video-indicator"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 时间轴项目20251029 -->
+            <div class="timeline-item">
+                <div class="timeline-date">2025.10.29</div>
+                <div class="timeline-content">
+                    <h3>什么吃饱了撑的，人活着不就是为了这几个瞬间</br>#岗什卡</h3>
+                    <div class="grid-container">
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251029/01.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251029/01.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251029/02.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251029/02.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251029/03.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251029/03.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251029/04.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251029/04.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251029/05.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251029/05.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251029/06.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251029/06.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251029/07.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251029/07.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251029/08.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251029/08.jpg" alt=" " class="lazy">
+                        </div>
+                        <div class="grid-item" data-type="image" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251029/09.jpg">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%23fff'%3E加载中...%3C/text%3E%3C/svg%3E" data-src="https://axurerp.oss-cn-beijing.aliyuncs.com/zhoudan/tuwen/20251029/09.jpg" alt=" " class="lazy">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            
+
+            
+        </div>
+    </main>
+
+    <!-- 图片/视频弹窗 -->
+    <div class="modal" id="imageModal">
+        <button class="close-btn" id="closeModal">&times;</button>
+        <button class="prev-btn" id="prevMedia">&lt;</button>
+        <div class="modal-content">
+            <!-- 动态插入图片或视频 -->
+        </div>
+        <button class="next-btn" id="nextMedia">&gt;</button>
+    </div>
+
+    <!-- 微信二维码弹窗 -->
+    <div class="wechat-modal" id="wechatModal">
+        <div class="wechat-content">
+            <h3>我的微信</h3>
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23f0f0f0'/%3E%3Cpath d='M50,50 L150,50 L150,150 L50,150 Z' fill='none' stroke='%23333' stroke-width='2'/%3E%3Cpath d='M70,70 L130,70 L130,130 L70,130 Z' fill='none' stroke='%23333' stroke-width='2'/%3E%3Ctext x='100' y='180' font-size='14' text-anchor='middle' fill='%23333'%3E微信二维码%3C/text%3E%3C/svg%3E" alt="微信二维码">
+            <button class="wechat-close" id="closeWechat">关闭</button>
+        </div>
     </div>
 
     <script>
-        // 检测浏览器是否支持视频播放
-        function canPlayVideo() {
-            const video = document.createElement('video');
-            return !!(video.canPlayType && video.canPlayType('video/mp4; codecs="avc1.42E01E, mp4a.40.2"'));
-        }
-        
-        // 启用视频声音（需要用户交互）
-        document.addEventListener('click', function() {
-            const video = document.getElementById('video-background');
-            if (video) {
-                video.muted = false;
-            }
-        }, { once: true });
-        
-        // 倒计时和跳转功能
-        let countdown = 8;
-        const countdownElement = document.getElementById('countdown');
-        
-        const countdownInterval = setInterval(function() {
-            countdown--;
-            if (countdownElement) {
-                countdownElement.textContent = countdown;
-            }
-             
-            if (countdown <= 0) {
-                clearInterval(countdownInterval);
-                window.location.href = 'https://www.xiaohongshu.com/user/profile/57b9561250c4b43d54b94228';
-            }
-        }, 1000);
-        
-        // 确保视频自动播放
-        window.addEventListener('load', function() {
-            const video = document.getElementById('video-background');
-            const fallbackBackground = document.getElementById('fallback-background');
+        // 背景轮播功能
+        document.addEventListener('DOMContentLoaded', function() {
+            // 背景轮播
+            const slides = document.querySelectorAll('.slide');
+            let currentSlide = 0;
             
-            // 检查浏览器是否支持视频播放
-            if (!canPlayVideo()) {
-                console.log('浏览器不支持视频播放，显示备用背景');
-                if (fallbackBackground) {
-                    fallbackBackground.style.zIndex = '-1';
-                }
-                if (video) {
-                    video.style.display = 'none';
-                }
-                return;
+            function showSlide(n) {
+                slides.forEach(slide => slide.classList.remove('active'));
+                currentSlide = (n + slides.length) % slides.length;
+                slides[currentSlide].classList.add('active');
             }
             
-            // 尝试播放视频
-            if (video) {
-                const playPromise = video.play();
+            // 初始化显示第一张背景
+            showSlide(0);
+            
+            // 自动轮播
+            setInterval(() => {
+                showSlide(currentSlide + 1);
+            }, 5000);
+
+            // 懒加载功能
+            const lazyImages = document.querySelectorAll('img.lazy');
+            
+            const lazyLoad = function() {
+                lazyImages.forEach(img => {
+                    if (img.getBoundingClientRect().top < window.innerHeight + 100) {
+                        img.src = img.dataset.src;
+                        img.classList.remove('lazy');
+                    }
+                });
+            };
+            
+            // 初始加载可视区域内的图片
+            lazyLoad();
+            
+            // 滚动时加载图片
+            window.addEventListener('scroll', lazyLoad);
+            
+            // 弹窗功能
+            const modal = document.getElementById('imageModal');
+            const modalContent = modal.querySelector('.modal-content');
+            const closeModal = document.getElementById('closeModal');
+            const prevBtn = document.getElementById('prevMedia');
+            const nextBtn = document.getElementById('nextMedia');
+            
+            let currentMediaIndex = 0;
+            let currentMediaItems = [];
+            
+            // 收集所有可点击的媒体项
+            const mediaItems = document.querySelectorAll('.grid-item');
+            
+            // 为每个媒体项添加点击事件
+            mediaItems.forEach((item, index) => {
+                item.addEventListener('click', function() {
+                    // 获取当前时间轴内的所有媒体项
+                    const timelineContent = this.closest('.timeline-content');
+                    currentMediaItems = Array.from(timelineContent.querySelectorAll('.grid-item'));
+                    currentMediaIndex = currentMediaItems.indexOf(this);
+                    
+                    showMediaModal();
+                });
+            });
+            
+            // 显示弹窗
+            function showMediaModal() {
+                const item = currentMediaItems[currentMediaIndex];
+                const type = item.dataset.type;
+                const src = item.dataset.src;
                 
-                if (playPromise !== undefined) {
-                    playPromise.then(function() {
-                        // 视频播放成功
-                        console.log('视频播放成功');
-                    }).catch(function(error) {
-                        // 视频播放失败，显示备用背景
-                        console.log('视频播放失败:', error);
-                        if (fallbackBackground) {
-                            fallbackBackground.style.zIndex = '-1';
-                        }
-                        video.style.display = 'none';
-                    });
+                modalContent.innerHTML = '';
+                
+                if (type === 'image') {
+                    const img = document.createElement('img');
+                    img.src = src;
+                    img.alt = '查看大图';
+                    img.onerror = function() {
+                        this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"%3E%3Crect width="400" height="300" fill="%23333"/%3E%3Ctext x="50%25" y="50%25" font-size="18" text-anchor="middle" fill="%23fff"%3E图片加载失败%3C/text%3E%3C/svg%3E';
+                    };
+                    modalContent.appendChild(img);
+                } else if (type === 'video') {
+                    const video = document.createElement('video');
+                    video.controls = true;
+                    video.autoplay = true;
+                    
+                    const source = document.createElement('source');
+                    source.src = src;
+                    source.type = 'video/mp4';
+                    
+                    video.appendChild(source);
+                    video.onerror = function() {
+                        const errorMsg = document.createElement('p');
+                        errorMsg.textContent = '视频加载失败';
+                        errorMsg.style.color = 'white';
+                        errorMsg.style.textAlign = 'center';
+                        errorMsg.style.padding = '20px';
+                        modalContent.appendChild(errorMsg);
+                    };
+                    
+                    modalContent.appendChild(video);
                 }
+                
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
             }
-        });
-        
-        // 添加视频加载错误处理
-        document.getElementById('video-background').addEventListener('error', function() {
-            console.log('视频加载错误，使用备用背景');
-            const fallbackBackground = document.getElementById('fallback-background');
-            if (fallbackBackground) {
-                fallbackBackground.style.zIndex = '-1';
-            }
-            this.style.display = 'none';
+            
+            // 关闭弹窗
+            closeModal.addEventListener('click', function() {
+                modal.classList.remove('active');
+                document.body.style.overflow = 'auto';
+                
+                // 停止视频播放
+                const video = modalContent.querySelector('video');
+                if (video) {
+                    video.pause();
+                }
+            });
+            
+            // 点击弹窗背景关闭
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeModal.click();
+                }
+            });
+            
+            // 上一张/下一张
+            prevBtn.addEventListener('click', function() {
+                currentMediaIndex = (currentMediaIndex - 1 + currentMediaItems.length) % currentMediaItems.length;
+                showMediaModal();
+            });
+            
+            nextBtn.addEventListener('click', function() {
+                currentMediaIndex = (currentMediaIndex + 1) % currentMediaItems.length;
+                showMediaModal();
+            });
+            
+            // 键盘导航
+            document.addEventListener('keydown', function(e) {
+                if (!modal.classList.contains('active')) return;
+                
+                if (e.key === 'Escape') {
+                    closeModal.click();
+                } else if (e.key === 'ArrowLeft') {
+                    prevBtn.click();
+                } else if (e.key === 'ArrowRight') {
+                    nextBtn.click();
+                }
+            });
+            
+            // 视频错误处理
+            const videos = document.querySelectorAll('video');
+            videos.forEach(video => {
+                video.addEventListener('error', function() {
+                    this.parentNode.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:#333;color:#fff;">视频加载失败</div>';
+                });
+            });
+            
+            // 微信二维码弹窗
+            const wechatBtn = document.getElementById('wechatBtn');
+            const wechatModal = document.getElementById('wechatModal');
+            const closeWechat = document.getElementById('closeWechat');
+            
+            wechatBtn.addEventListener('click', function() {
+                wechatModal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            });
+            
+            closeWechat.addEventListener('click', function() {
+                wechatModal.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            });
+            
+            wechatModal.addEventListener('click', function(e) {
+                if (e.target === wechatModal) {
+                    closeWechat.click();
+                }
+            });
         });
     </script>
 </body>
